@@ -36,8 +36,8 @@ public class UserValidator implements Validator {
             // 3
             errors.rejectValue("passwordConfirmation", "Match");
         }    
-		Optional<User> potentialEmail = userRepository.findByEmail(user.getEmail());
-		if (potentialEmail.isPresent()) {
+		User potentialEmail = userRepository.findByEmail(user.getEmail());
+		if (potentialEmail != null ) {
 			errors.rejectValue("emailExists", "Unique");
 		}
         

@@ -8,9 +8,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.michelle.Kali.exceptions.EmailNotFoundException;
 import com.michelle.Kali.models.Role;
 import com.michelle.Kali.models.User;
 import com.michelle.Kali.repositories.UserRepository;
@@ -24,12 +24,12 @@ public class UserDetailsServiceImplementation implements UserDetailsService {
     public UserDetailsServiceImplementation(UserRepository userRepository){
         this.userRepository = userRepository;
     }
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    
+    public UserDetails loadUserByEmail(String email) throws EmailNotFoundException {
         User user = userRepository.findByEmail(email);
         
         if(user == null) {
-            throw new UsernameNotFoundException("User not found");
+            throw new EmailNotFoundException("Email not found");
         }
         
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), getAuthorities(user));

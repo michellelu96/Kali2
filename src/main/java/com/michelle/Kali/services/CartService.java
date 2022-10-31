@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.michelle.Kali.dto.cart.AddToCartDto;
 import com.michelle.Kali.dto.cart.CartDto;
 import com.michelle.Kali.dto.cart.CartItemDto;
+import com.michelle.Kali.exceptions.CartItemNotExistException;
 import com.michelle.Kali.models.Cart;
 import com.michelle.Kali.models.Product;
 import com.michelle.Kali.models.User;
@@ -62,7 +63,12 @@ public class CartService {
 		
 	}
 	
-	public void deleteCartItems(int userId) {
+	public void deleteCartItem(Long id, Long userId) throws CartItemNotExistException{
+		if(!cartRepo.existsById(id)) throw new CartItemNotExistException("Cart id is invalid : " + id);
+		cartRepo.deleteById(id);
+	}
+	
+	public void deleteCartItems(Long userId) {
 		cartRepo.deleteAll();
 	}
 	
