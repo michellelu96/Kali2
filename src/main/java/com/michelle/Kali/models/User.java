@@ -1,7 +1,9 @@
 package com.michelle.Kali.models;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,6 +20,7 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -39,6 +42,11 @@ public class User {
     private String lastName;
     private String phoneNumber;
     
+
+    @NotBlank
+    @Size(max = 20)
+    private String username;
+    
     @Transient
     private String passwordConfirmation;
     
@@ -46,23 +54,24 @@ public class User {
     private Date createdAt;
     private Date updatedAt;
     
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
     		name = "users_roles",
     		joinColumns = @JoinColumn(name="user_id"),
     		inverseJoinColumns= @JoinColumn(name="role_id")
     		)
-    private List<Role> roles;
+    private Set<Role> roles = new HashSet<>();
     
     @JsonIgnore
     @OneToMany(mappedBy="user",fetch = FetchType.LAZY)
     private List<Order> orders;
     
-    public User(String firstName, String lastName, String email, String password) {
+    public User(String username,String firstName, String lastName, String email, String password) {
     	this.firstName = firstName;
     	this.lastName = lastName;
     	this.email = email;
     	this.password = password;
+    	this.username = username;
     }
     
     
@@ -131,11 +140,11 @@ public class User {
 		this.updatedAt = updatedAt;
 	}
 
-	public List<Role> getRoles() {
+	public Set<Role> getRoles() {
 		return roles;
 	}
 
-	public void setRoles(List<Role> roles) {
+	public void setRoles(Set<Role> roles) {
 		this.roles = roles;
 	}
     
@@ -155,5 +164,31 @@ public class User {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
+
+
+	public String getUsername() {
+		return username;
+	}
+
+
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+
+
+	public List<Order> getOrders() {
+		return orders;
+	}
+
+
+
+	public void setOrders(List<Order> orders) {
+		this.orders = orders;
+	}
+
+
 
 }

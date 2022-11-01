@@ -12,5 +12,7 @@ import com.michelle.Kali.models.User;
 public interface UserRepository extends JpaRepository<User, Long>{
 	List<User> findAll();
 	User findByEmail(String email);
+	Optional<User> findByUsername(String username);
+//	User findByUsername(String username);
 	User findUserByEmail(String email);
 }
