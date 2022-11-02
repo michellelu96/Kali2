@@ -36,7 +36,7 @@ public class UserValidator implements Validator {
             // 3
             errors.rejectValue("passwordConfirmation", "Match");
         }    
-		User potentialUsername = userRepository.findByUsername(user.getUsername());
+		Optional<User> potentialUsername = userRepository.findByUsername(user.getUsername());
 		if (potentialUsername != null ) {
 			errors.rejectValue("username", "Unique");
 		}
