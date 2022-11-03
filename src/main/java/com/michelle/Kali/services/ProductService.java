@@ -59,7 +59,6 @@ public class ProductService {
 		Optional<Product> optionalProduct = productRepo.findById(productId);
 		if (!optionalProduct.isPresent()) throw new ProductNotExistException("Product id is invalid " + productId);
 		return optionalProduct.get();
-		
 	}
 	
 }

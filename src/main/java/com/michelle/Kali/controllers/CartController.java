@@ -21,6 +21,7 @@ import com.michelle.Kali.exceptions.CartItemNotExistException;
 import com.michelle.Kali.exceptions.ProductNotExistException;
 import com.michelle.Kali.models.Product;
 import com.michelle.Kali.models.User;
+import com.michelle.Kali.security.services.UserDetailsServiceImpl;
 import com.michelle.Kali.services.CartService;
 import com.michelle.Kali.services.ProductService;
 
@@ -34,7 +35,7 @@ public class CartController {
 	private ProductService productService;
 	
 	@Autowired
-	private UserService userService;
+	private UserDetailsServiceImpl userService;
 	
 	@PostMapping("/cart/add")
 	public ResponseEntity<ApiResponse> addToCart(@RequestBody AddToCartDto addToCartDto, @RequestParam("Id") Long userId) throws ProductNotExistException{
@@ -60,7 +61,7 @@ public class CartController {
 		return new ResponseEntity<ApiResponse>(new ApiResponse(true,"Product has been updated"), HttpStatus.OK);
 	}
 	
-	@DeleteMapping("/cart/delete/{cartItemId")
+	@DeleteMapping("/cart/delete/{cartItemId}")
 	public ResponseEntity<ApiResponse> deleteCartItem(@PathVariable("cartItemId") Long itemId, @RequestParam("id") Long userId) throws CartItemNotExistException{
 		cartService.deleteCartItem(itemId, userId);
 		return new ResponseEntity<ApiResponse>(new ApiResponse(true,"Item has been removed"), HttpStatus.OK);

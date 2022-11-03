@@ -18,8 +18,8 @@ import com.michelle.Kali.dto.checkout.CheckoutItemDto;
 import com.michelle.Kali.exceptions.OrderNotFoundException;
 import com.michelle.Kali.models.Order;
 import com.michelle.Kali.models.User;
+import com.michelle.Kali.security.services.UserDetailsServiceImpl;
 import com.michelle.Kali.services.OrderService;
-import com.michelle.Kali.services.UserService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.StripeResponse;
@@ -31,7 +31,7 @@ public class OrderController {
 	private OrderService orderService;
 	
 	@Autowired
-	private UserService userService;
+	private UserDetailsServiceImpl userService;
 	
 	// create session API
 	@PostMapping("/create-checkout-session")
