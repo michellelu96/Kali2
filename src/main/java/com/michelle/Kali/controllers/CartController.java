@@ -23,7 +23,6 @@ import com.michelle.Kali.models.Product;
 import com.michelle.Kali.models.User;
 import com.michelle.Kali.services.CartService;
 import com.michelle.Kali.services.ProductService;
-import com.michelle.Kali.services.UserService;
 
 @RestController
 public class CartController {

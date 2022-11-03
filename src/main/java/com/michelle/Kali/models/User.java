@@ -38,8 +38,17 @@ public class User {
     private String email;
     @Size(min=5)
     private String password;
+    
+	@NotBlank
+	@Size(max=50)
     private String firstName;
+	
+	@NotBlank
+	@Size(max=50)
     private String lastName;
+	
+	@NotBlank
+	@Size(max=50)
     private String phoneNumber;
     
 
@@ -66,9 +75,10 @@ public class User {
     @OneToMany(mappedBy="user",fetch = FetchType.LAZY)
     private List<Order> orders;
     
-    public User(String username,String firstName, String lastName, String email, String password) {
+    public User(String username,String firstName, String lastName, String phoneNumber, String email, String password) {
     	this.firstName = firstName;
     	this.lastName = lastName;
+    	this.phoneNumber = phoneNumber;
     	this.email = email;
     	this.password = password;
     	this.username = username;
@@ -188,7 +198,5 @@ public class User {
 	public void setOrders(List<Order> orders) {
 		this.orders = orders;
 	}
-
-
 
 }

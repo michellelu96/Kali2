@@ -1,65 +1,131 @@
 package com.michelle.Kali.controllers;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.michelle.Kali.models.ERole;
+import com.michelle.Kali.models.Role;
 import com.michelle.Kali.models.User;
-import com.michelle.Kali.services.UserService;
-import com.michelle.Kali.validator.UserValidator;
+import com.michelle.Kali.payload.request.LoginRequest;
+import com.michelle.Kali.payload.request.SignupRequest;
+import com.michelle.Kali.payload.response.JwtResponse;
+import com.michelle.Kali.payload.response.MessageResponse;
+import com.michelle.Kali.repositories.RoleRepository;
+import com.michelle.Kali.repositories.UserRepository;
+import com.michelle.Kali.security.jwt.JwtUtils;
+import com.michelle.Kali.security.services.UserDetailsImpl;
 
-@Controller
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/api/auth")
 public class UserController {
 	@Autowired
-	private UserService userService;
-    
-    private UserValidator userValidator;
-    
-    // NEW
-    public UserController(UserService userService, UserValidator userValidator) {
-        this.userService = userService;
-        this.userValidator = userValidator;
-    }
-    
-   //login page
-    @RequestMapping("/login")
-    public String login(@RequestParam(value="error", required=false) String error, @RequestParam(value="logout", required=false) String logout, Model model,HttpSession session,HttpServletRequest request) {
-        if(error != null) {
-            model.addAttribute("errorMessage", "Invalid Credentials, Please try again.");
-        }
-        if(logout != null) {
-            model.addAttribute("logoutMessage", "Logout Successful!");
-        }
-        if(session.getAttribute("userId") != null) {
-        	return"redirect:/";
-        }
-        return "loginPage.jsp";
-    }
-    
-    
-    @RequestMapping("/registration")
-    public String registerForm(@Valid @ModelAttribute("user") User user, BindingResult result) {
-        return "registrationPage.jsp";
-    }
-    
-    @PostMapping("/registration")
-    public String registration(@Valid @ModelAttribute("user") User user, BindingResult result, Model model,HttpSession session) {
-        // NEW
-        userValidator.validate(user, result);
-        if (result.hasErrors()) {
-            return "registrationPage.jsp";
-        }
-        session.setAttribute("userId",user.getId());
-        userService.saveWithUserRole(user);
-        return "redirect:/";
-    }
+	AuthenticationManager authenticationManager;
+	
+	@Autowired
+	UserRepository userRepository;
+	
+	@Autowired
+	RoleRepository roleRepository;
+	
+	@Autowired
+	PasswordEncoder encoder;
+	
+	@Autowired
+	JwtUtils jwtUtils;
+	
+	@PostMapping("/signin")
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest){
+		Authentication authentication = authenticationManager.authenticate( new UsernamePasswordAuthenticationToken(loginRequest.getPassword(), loginRequest.getPassword()));
+		
+		SecurityContextHolder.getContext()	.setAuthentication(authentication);
+		String jwt = jwtUtils.generateJwtToken(authentication);
+		
+		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+		List<String> roles = userDetails.getAuthorities().stream()
+				.map(item -> item.getAuthority())
+				.collect(Collectors.toList());
+		
+		return ResponseEntity.ok(new JwtResponse(jwt,
+				userDetails.getId(),
+				userDetails.getUsername(),
+				userDetails.getEmail(), roles
+				));
+		}
+	
+	@PostMapping("/signup")
+	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest){
+		if(userRepository.existsByUsername(signupRequest.getUsername())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Error: Username is taken!"));
+		}
+		
+		if(userRepository.existsByEmail(signupRequest.getEmail())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Error: Email is taken"));
+		}
+		
+		User user = new User(signupRequest.getUsername(),
+				signupRequest.getFirstName(),
+				signupRequest.getLastName(),
+				signupRequest.getPhoneNumber(),
+				signupRequest.getEmail(),
+				encoder.encode(signupRequest.getPassword()));
+		
+		Set<String> strRoles = signupRequest.getRole();
+		Set<Role> roles = new HashSet<>();
+		
+		if(strRoles == null) {
+			Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+					.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+			roles.add(userRole);
+		}else {
+			strRoles.forEach(role -> {
+				switch(role) {
+				case "admin":
+			          Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+		              	.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+		          roles.add(adminRole);
+		          
+		          break;
+		          
+				case "mod":
+					Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+						.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+					roles.add(modRole);
+					break;
+					
+				default:
+					Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+						.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+					roles.add(userRole);
+					break;
+				}
+			});
+		}
+		
+		user.setRoles(roles);
+		userRepository.save(user);
+		
+		return ResponseEntity.ok(new MessageResponse("User registered succesfully"));
+	}
 }
